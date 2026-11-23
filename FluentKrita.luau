@@ -487,7 +487,8 @@ local aa = {
 				Background = D.Background or D.BackgroundImage,
 				BackgroundTransparency = D.BackgroundTransparency,
 				PlayerTab = D.PlayerTab,
-				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
+                MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
+				MinimizeButtonSpeed = D.MinimizeButtonSpeed,
 				Resizable = D.Resizable
 			}
 			x.Window = E
@@ -2172,7 +2173,7 @@ local aa = {
 				n.Window.Maximize(not n.Window.Maximized)
 			end)
 			o.MinButton = q(i.Min, UDim2.new(1, - 80, 0, 4), o.Frame, function()
-				p.Window:Minimize()
+				n.Window:Minimize(n.Window.MinimizeButtonSpeed)
 			end)
 			return o
 		end
@@ -2270,6 +2271,10 @@ local aa = {
 			end
 			function v.SetMinimizeSpeed(M, speed)
 				v.MinimizeSpeed = math.max(0, tonumber(speed) or 0.25)
+			end
+            v.MinimizeButtonSpeed = t.MinimizeButtonSpeed ~= nil and tonumber(t.MinimizeButtonSpeed) or nil
+			function v.SetMinimizeButtonSpeed(M, speed)
+				v.MinimizeButtonSpeed = speed ~= nil and math.max(0, tonumber(speed)) or nil
 			end
 			v.AcrylicPaint = n.AcrylicPaint()
 			local D, E = s('Frame', {
@@ -2576,7 +2581,7 @@ local aa = {
 			end)
 			local activeZoomTween
 			local minimizeToken = 0
-			function v.Minimize(M)
+			function v.Minimize(M, customSpeed)
 				v.Minimized = not v.Minimized
 				minimizeToken = minimizeToken + 1
 				local token = minimizeToken
@@ -2584,7 +2589,7 @@ local aa = {
 					activeZoomTween:Cancel()
 					activeZoomTween = nil
 				end
-				local speed = math.max(0, tonumber(v.MinimizeSpeed) or 0.25)
+				local speed = math.max(0, tonumber(customSpeed ~= nil and customSpeed or v.MinimizeSpeed) or 0.25)
 				if v.Minimized then
 					if speed <= 0 then
 						zoomScale.Scale = 0
