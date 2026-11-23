@@ -760,7 +760,7 @@ local aa = {
 						CornerRadius = UDim.new(0, 8)
 					})
 				}),
-				l.BackgroundImage,
+				l.BackgroundImage, -- <-- ADD THIS LINE
 				j('Frame', {
 					BackgroundTransparency = 1,
 					Size = UDim2.fromScale(1, 1),
@@ -1759,7 +1759,88 @@ local aa = {
 				return B
 			end
 			setmetatable(x, v)
-            local discordRaw = opts.Discord or opts.DiscordInvite or opts.Invite
+			k('Frame', {
+				Size = UDim2.new(1, 0, 0, 74),
+				BackgroundTransparency = 0.9,
+				LayoutOrder = 1,
+				Parent = x.ContainerFrame,
+				ThemeTag = {
+					BackgroundColor3 = 'Element',
+					BackgroundTransparency = 'ElementTransparency'
+				}
+			}, {
+				k('UICorner', {
+					CornerRadius = UDim.new(0, 6)
+				}),
+				k('UIStroke', {
+					Transparency = 0.5,
+					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+					ThemeTag = {
+						Color = 'ElementBorder'
+					}
+				}),
+				k('Frame', {
+					AnchorPoint = Vector2.new(0, 0.5),
+					Position = UDim2.new(0, 14, 0.5, 0),
+					Size = UDim2.fromOffset(48, 48),
+					BackgroundTransparency = 0.8,
+					ThemeTag = {
+						BackgroundColor3 = 'Tab'
+					}
+				}, {
+					k('UICorner', {
+						CornerRadius = UDim.new(1, 0)
+					}),
+					k('ImageLabel', {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+						Image = avatarUrl
+					}, {
+						k('UICorner', {
+							CornerRadius = UDim.new(1, 0)
+						})
+					})
+				}),
+				k('Frame', {
+					AnchorPoint = Vector2.new(0, 0.5),
+					Position = UDim2.new(0, 74, 0.5, 0),
+					Size = UDim2.new(1, -86, 0, 52),
+					BackgroundTransparency = 1
+				}, {
+					k('UIListLayout', {
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+						Padding = UDim.new(0, 2)
+					}),
+					k('TextLabel', {
+						LayoutOrder = 1,
+						Text = displayName .. (displayName ~= userName and (' (@' .. userName .. ')') or ''),
+						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+						TextSize = 15,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						Size = UDim2.new(1, 0, 0, 18),
+						BackgroundTransparency = 1,
+						ThemeTag = {
+							TextColor3 = 'Text'
+						}
+					}),
+					k('TextLabel', {
+						LayoutOrder = 2,
+						Text = subtitle .. '  •  UserId: ' .. tostring(userId),
+						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+						TextSize = 12,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						Size = UDim2.new(1, 0, 0, 15),
+						BackgroundTransparency = 1,
+						ThemeTag = {
+							TextColor3 = 'SubText'
+						}
+					})
+				})
+			})
+                        local discordRaw = opts.Discord or opts.DiscordInvite or opts.Invite
 			if not discordRaw and type(u.Title) == 'string' then
 				discordRaw = u.Title:match('discord%.gg/([%w%-_]+)')
 			end
@@ -1856,88 +1937,6 @@ local aa = {
 					end
 				end)
 			end
-			k('Frame', {
-				Size = UDim2.new(1, 0, 0, 74),
-				BackgroundTransparency = 0.9,
-				LayoutOrder = 1,
-				Parent = x.ContainerFrame,
-				ThemeTag = {
-					BackgroundColor3 = 'Element',
-					BackgroundTransparency = 'ElementTransparency'
-				}
-			}, {
-				k('UICorner', {
-					CornerRadius = UDim.new(0, 6)
-				}),
-				k('UIStroke', {
-					Transparency = 0.5,
-					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-					ThemeTag = {
-						Color = 'ElementBorder'
-					}
-				}),
-				k('Frame', {
-					AnchorPoint = Vector2.new(0, 0.5),
-					Position = UDim2.new(0, 14, 0.5, 0),
-					Size = UDim2.fromOffset(48, 48),
-					BackgroundTransparency = 0.8,
-					ThemeTag = {
-						BackgroundColor3 = 'Tab'
-					}
-				}, {
-					k('UICorner', {
-						CornerRadius = UDim.new(1, 0)
-					}),
-					k('ImageLabel', {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-						Image = avatarUrl
-					}, {
-						k('UICorner', {
-							CornerRadius = UDim.new(1, 0)
-						})
-					})
-				}),
-				k('Frame', {
-					AnchorPoint = Vector2.new(0, 0.5),
-					Position = UDim2.new(0, 74, 0.5, 0),
-					Size = UDim2.new(1, -86, 0, 52),
-					BackgroundTransparency = 1
-				}, {
-					k('UIListLayout', {
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						VerticalAlignment = Enum.VerticalAlignment.Center,
-						Padding = UDim.new(0, 2)
-					}),
-					k('TextLabel', {
-						LayoutOrder = 1,
-						Text = displayName .. (displayName ~= userName and (' (@' .. userName .. ')') or ''),
-						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
-						TextSize = 15,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						Size = UDim2.new(1, 0, 0, 18),
-						BackgroundTransparency = 1,
-						ThemeTag = {
-							TextColor3 = 'Text'
-						}
-					}),
-					k('TextLabel', {
-						LayoutOrder = 2,
-						Text = subtitle .. '  •  UserId: ' .. tostring(userId),
-						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-						TextSize = 12,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						Size = UDim2.new(1, 0, 0, 15),
-						BackgroundTransparency = 1,
-						ThemeTag = {
-							TextColor3 = 'SubText'
-						}
-					})
-				})
-			})
-
 			local accountSec = x:AddSection('Client & Executor')
 			accountSec:AddParagraph({ Title = 'Executor', Content = executorName })
 			accountSec:AddParagraph({
@@ -2827,6 +2826,7 @@ local aa = {
 						end
 					end)
 
+					-- 1. Fade in loading screen
 					if fadeInSpeed > 0 then
 						local tIn = TweenService:Create(loadingRoot, TweenInfo.new(fadeInSpeed, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { GroupTransparency = 0 })
 						TweenService:Create(loadingScale, TweenInfo.new(fadeInSpeed, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 }):Play()
@@ -2842,6 +2842,7 @@ local aa = {
 						return
 					end
 
+					-- 2. Rotate while loading
 					if loadDuration > 0 then
 						task.wait(loadDuration)
 					end
@@ -2851,6 +2852,7 @@ local aa = {
 						return
 					end
 
+					-- 3. Fade out loading screen
 					if fadeOutSpeed > 0 then
 						local tOut = TweenService:Create(loadingRoot, TweenInfo.new(fadeOutSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { GroupTransparency = 1 })
 						TweenService:Create(loadingScale, TweenInfo.new(fadeOutSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Scale = 0.9 }):Play()
@@ -2867,6 +2869,7 @@ local aa = {
 						return
 					end
 
+					-- 4. Reveal main window with zoom-in
 					v.Minimized = false
 					zoomScale.Scale = 0
 					applyTransform()
