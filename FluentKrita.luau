@@ -1840,102 +1840,48 @@ local aa = {
 					})
 				})
 			})
-                        local discordRaw = opts.Discord or opts.DiscordInvite or opts.Invite
+            local discordRaw = opts.Discord or opts.DiscordInvite or opts.Invite
 			if not discordRaw and type(u.Title) == 'string' then
 				discordRaw = u.Title:match('discord%.gg/([%w%-_]+)')
+			end
+			if not discordRaw and u.TitleBar and u.TitleBar.Frame then
+				for _, obj in ipairs(u.TitleBar.Frame:GetDescendants()) do
+					if obj:IsA('TextLabel') and obj.Text then
+						local found = obj.Text:match('discord%.gg/([%w%-_]+)')
+						if found then
+							discordRaw = found
+							break
+						end
+					end
+				end
 			end
 			local discordCode
 			if type(discordRaw) == 'string' and discordRaw ~= '' then
 				discordCode = discordRaw:match('discord%.gg/([%w%-_]+)') or discordRaw:match('^%s*(.-)%s*$')
 			end
 			if discordCode and discordCode ~= '' then
-				local discordBtn = k('TextButton', {
-					Size = UDim2.new(1, 0, 0, 36),
-					BackgroundTransparency = 0.89,
-					LayoutOrder = 0,
-					Text = '',
-					Parent = x.ContainerFrame,
-					ThemeTag = {
-						BackgroundColor3 = 'Element',
-						BackgroundTransparency = 'ElementTransparency'
-					}
-				}, {
-					k('UICorner', {
-						CornerRadius = UDim.new(0, 6)
-					}),
-					k('UIStroke', {
-						Transparency = 0.5,
-						ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-						ThemeTag = {
-							Color = 'ElementBorder'
-						}
-					}),
-					k('ImageLabel', {
-						AnchorPoint = Vector2.new(0, 0.5),
-						Position = UDim2.new(0, 12, 0.5, 0),
-						Size = UDim2.fromOffset(16, 16),
-						BackgroundTransparency = 1,
-						Image = 'rbxassetid://10723426722',
-						ThemeTag = {
-							ImageColor3 = 'Accent'
-						}
-					}),
-					k('TextLabel', {
-						AnchorPoint = Vector2.new(0, 0.5),
-						Position = UDim2.new(0, 36, 0.5, 0),
-						Size = UDim2.new(1, - 72, 1, 0),
-						Text = discordCode,
-						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
-						TextSize = 13,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						BackgroundTransparency = 1,
-						ThemeTag = {
-							TextColor3 = 'Text'
-						}
-					}),
-					k('ImageLabel', {
-						AnchorPoint = Vector2.new(1, 0.5),
-						Position = UDim2.new(1, - 12, 0.5, 0),
-						Size = UDim2.fromOffset(15, 15),
-						BackgroundTransparency = 1,
-						Image = 'rbxassetid://10709812159',
-						ThemeTag = {
-							ImageColor3 = 'SubText'
-						}
-					})
-				})
-				local _, setDiscordTrans = j.SpringMotor(j.GetThemeProperty'ElementTransparency', discordBtn, 'BackgroundTransparency', false, true)
-				j.AddSignal(discordBtn.MouseEnter, function()
-					setDiscordTrans(j.GetThemeProperty'ElementTransparency' - j.GetThemeProperty'HoverChange')
-				end)
-				j.AddSignal(discordBtn.MouseLeave, function()
-					setDiscordTrans(j.GetThemeProperty'ElementTransparency')
-				end)
-				j.AddSignal(discordBtn.MouseButton1Down, function()
-					setDiscordTrans(j.GetThemeProperty'ElementTransparency' + j.GetThemeProperty'HoverChange')
-				end)
-				j.AddSignal(discordBtn.MouseButton1Up, function()
-					setDiscordTrans(j.GetThemeProperty'ElementTransparency' - j.GetThemeProperty'HoverChange')
-				end)
-				j.AddSignal(discordBtn.MouseButton1Click, function()
-					local fullUrl = 'https://discord.gg/' .. discordCode
-					local clip = setclipboard or toclipboard
-					if clip then
-						pcall(clip, fullUrl)
-						t:Notify({
-							Title = 'Discord',
-							Content = 'Copied ' .. fullUrl,
-							Duration = 3
-						})
-					else
-						t:Notify({
-							Title = 'Discord',
-							Content = fullUrl,
-							Duration = 5
-						})
+				local discordBtn = x:AddButton({
+					Title = discordCode,
+					Callback = function()
+						local fullUrl = 'https://discord.gg/' .. discordCode
+						local clip = setclipboard or toclipboard
+						if clip then
+							pcall(clip, fullUrl)
+							t:Notify({
+								Title = 'Discord',
+								Content = 'Copied ' .. fullUrl,
+								Duration = 3
+							})
+						else
+							t:Notify({
+								Title = 'Discord',
+								Content = fullUrl,
+								Duration = 5
+							})
+						end
 					end
-				end)
+				})
+				discordBtn.Frame.LayoutOrder = 2
 			end
 			local accountSec = x:AddSection('Client & Executor')
 			accountSec:AddParagraph({ Title = 'Executor', Content = executorName })
