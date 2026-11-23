@@ -487,9 +487,10 @@ local aa = {
 				Background = D.Background or D.BackgroundImage,
 				BackgroundTransparency = D.BackgroundTransparency,
 				PlayerTab = D.PlayerTab,
-                MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
+				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
 				MinimizeButtonSpeed = D.MinimizeButtonSpeed,
-				Resizable = D.Resizable
+				Resizable = D.Resizable,
+				LoadingScreen = D.LoadingScreen
 			}
 			x.Window = E
 			x:SetTheme(D.Theme)
@@ -759,7 +760,7 @@ local aa = {
 						CornerRadius = UDim.new(0, 8)
 					})
 				}),
-				l.BackgroundImage, -- <-- ADD THIS LINE
+				l.BackgroundImage,
 				j('Frame', {
 					BackgroundTransparency = 1,
 					Size = UDim2.fromScale(1, 1),
@@ -1758,7 +1759,103 @@ local aa = {
 				return B
 			end
 			setmetatable(x, v)
-
+            local discordRaw = opts.Discord or opts.DiscordInvite or opts.Invite
+			if not discordRaw and type(u.Title) == 'string' then
+				discordRaw = u.Title:match('discord%.gg/([%w%-_]+)')
+			end
+			local discordCode
+			if type(discordRaw) == 'string' and discordRaw ~= '' then
+				discordCode = discordRaw:match('discord%.gg/([%w%-_]+)') or discordRaw:match('^%s*(.-)%s*$')
+			end
+			if discordCode and discordCode ~= '' then
+				local discordBtn = k('TextButton', {
+					Size = UDim2.new(1, 0, 0, 36),
+					BackgroundTransparency = 0.89,
+					LayoutOrder = 0,
+					Text = '',
+					Parent = x.ContainerFrame,
+					ThemeTag = {
+						BackgroundColor3 = 'Element',
+						BackgroundTransparency = 'ElementTransparency'
+					}
+				}, {
+					k('UICorner', {
+						CornerRadius = UDim.new(0, 6)
+					}),
+					k('UIStroke', {
+						Transparency = 0.5,
+						ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+						ThemeTag = {
+							Color = 'ElementBorder'
+						}
+					}),
+					k('ImageLabel', {
+						AnchorPoint = Vector2.new(0, 0.5),
+						Position = UDim2.new(0, 12, 0.5, 0),
+						Size = UDim2.fromOffset(16, 16),
+						BackgroundTransparency = 1,
+						Image = 'rbxassetid://10723426722',
+						ThemeTag = {
+							ImageColor3 = 'Accent'
+						}
+					}),
+					k('TextLabel', {
+						AnchorPoint = Vector2.new(0, 0.5),
+						Position = UDim2.new(0, 36, 0.5, 0),
+						Size = UDim2.new(1, - 72, 1, 0),
+						Text = discordCode,
+						FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+						TextSize = 13,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						BackgroundTransparency = 1,
+						ThemeTag = {
+							TextColor3 = 'Text'
+						}
+					}),
+					k('ImageLabel', {
+						AnchorPoint = Vector2.new(1, 0.5),
+						Position = UDim2.new(1, - 12, 0.5, 0),
+						Size = UDim2.fromOffset(15, 15),
+						BackgroundTransparency = 1,
+						Image = 'rbxassetid://10709812159',
+						ThemeTag = {
+							ImageColor3 = 'SubText'
+						}
+					})
+				})
+				local _, setDiscordTrans = j.SpringMotor(j.GetThemeProperty'ElementTransparency', discordBtn, 'BackgroundTransparency', false, true)
+				j.AddSignal(discordBtn.MouseEnter, function()
+					setDiscordTrans(j.GetThemeProperty'ElementTransparency' - j.GetThemeProperty'HoverChange')
+				end)
+				j.AddSignal(discordBtn.MouseLeave, function()
+					setDiscordTrans(j.GetThemeProperty'ElementTransparency')
+				end)
+				j.AddSignal(discordBtn.MouseButton1Down, function()
+					setDiscordTrans(j.GetThemeProperty'ElementTransparency' + j.GetThemeProperty'HoverChange')
+				end)
+				j.AddSignal(discordBtn.MouseButton1Up, function()
+					setDiscordTrans(j.GetThemeProperty'ElementTransparency' - j.GetThemeProperty'HoverChange')
+				end)
+				j.AddSignal(discordBtn.MouseButton1Click, function()
+					local fullUrl = 'https://discord.gg/' .. discordCode
+					local clip = setclipboard or toclipboard
+					if clip then
+						pcall(clip, fullUrl)
+						t:Notify({
+							Title = 'Discord',
+							Content = 'Copied ' .. fullUrl,
+							Duration = 3
+						})
+					else
+						t:Notify({
+							Title = 'Discord',
+							Content = fullUrl,
+							Duration = 5
+						})
+					end
+				end)
+			end
 			k('Frame', {
 				Size = UDim2.new(1, 0, 0, 74),
 				BackgroundTransparency = 0.9,
@@ -2252,12 +2349,14 @@ local aa = {
 		end
 		return function(t)
 			local u, v, w, x, y, z = e(k), {
+				Title = t.Title,
 				Minimized = false,
 				Maximized = false,
 				Size = t.Size,
 				CurrentPos = 0,
 				Position = UDim2.fromOffset(j.ViewportSize.X / 2 - t.Size.X.Offset / 2, j.ViewportSize.Y / 2 - t.Size.Y.Offset / 2)
 			}, false
+			local hasLoading = t.LoadingScreen == true or (type(t.LoadingScreen) == 'table' and t.LoadingScreen.Enabled ~= false)
 			local A, B = false
 			local C = false
             v.Resizable = t.Resizable ~= false
@@ -2359,6 +2458,7 @@ local aa = {
 				BackgroundTransparency = 1,
 				Size = v.Size,
 				Position = v.Position,
+				Visible = not hasLoading,
 				Parent = t.Parent
 			}, {
 				v.AcrylicPaint.Frame,
@@ -2635,6 +2735,155 @@ local aa = {
 						Duration = 6
 					}
 				end
+			end
+            if hasLoading then
+				local loadOpts = type(t.LoadingScreen) == 'table' and t.LoadingScreen or {}
+				local loadTitle = loadOpts.Title or t.Title or 'Loading'
+				local loadSubTitle = loadOpts.SubTitle or t.SubTitle or 'Initializing interface...'
+				local loadDuration = tonumber(loadOpts.Duration) or 1.5
+				local fadeInSpeed = tonumber(loadOpts.FadeInSpeed) or 0.35
+				local fadeOutSpeed = tonumber(loadOpts.FadeOutSpeed) or 0.35
+				local rotateSpeed = tonumber(loadOpts.RotateSpeed) or 1.5
+				local loadIcon = loadOpts.Icon or 'rbxassetid://10723433935'
+				local RunService = game:GetService'RunService'
+
+				zoomScale.Scale = 0
+				v.Root.Visible = false
+				if e(k).UseAcrylic and v.AcrylicPaint.SetVisibility then
+					v.AcrylicPaint.SetVisibility(false)
+				end
+
+				local loadingRoot = s('CanvasGroup', {
+					Size = UDim2.fromOffset(260, 145),
+					Position = UDim2.fromScale(0.5, 0.5),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					GroupTransparency = 1,
+					Parent = t.Parent,
+					ZIndex = 50,
+					ThemeTag = {
+						BackgroundColor3 = 'Dialog'
+					}
+				}, {
+					s('UICorner', {
+						CornerRadius = UDim.new(0, 10)
+					}),
+					s('UIStroke', {
+						Transparency = 0.45,
+						ThemeTag = {
+							Color = 'DialogBorder'
+						}
+					})
+				})
+				local loadingScale = s('UIScale', {
+					Scale = 0.9,
+					Parent = loadingRoot
+				})
+				local spinner = s('ImageLabel', {
+					Size = UDim2.fromOffset(38, 38),
+					Position = UDim2.new(0.5, 0, 0, 26),
+					AnchorPoint = Vector2.new(0.5, 0),
+					BackgroundTransparency = 1,
+					Image = loadIcon,
+					ThemeTag = {
+						ImageColor3 = 'Accent'
+					},
+					Parent = loadingRoot
+				})
+				s('TextLabel', {
+					Text = loadTitle,
+					FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+					TextSize = 15,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					Size = UDim2.new(1, - 28, 0, 18),
+					Position = UDim2.new(0.5, 0, 0, 78),
+					AnchorPoint = Vector2.new(0.5, 0),
+					BackgroundTransparency = 1,
+					ThemeTag = {
+						TextColor3 = 'Text'
+					},
+					Parent = loadingRoot
+				})
+				s('TextLabel', {
+					Text = loadSubTitle,
+					FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+					TextSize = 12,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					Size = UDim2.new(1, - 28, 0, 15),
+					Position = UDim2.new(0.5, 0, 0, 102),
+					AnchorPoint = Vector2.new(0.5, 0),
+					BackgroundTransparency = 1,
+					ThemeTag = {
+						TextColor3 = 'SubText'
+					},
+					Parent = loadingRoot
+				})
+
+				task.spawn(function()
+					local spinConn = RunService.RenderStepped:Connect(function(dt)
+						if spinner and spinner.Parent then
+							spinner.Rotation = (spinner.Rotation + (360 * rotateSpeed * dt)) % 360
+						end
+					end)
+
+					if fadeInSpeed > 0 then
+						local tIn = TweenService:Create(loadingRoot, TweenInfo.new(fadeInSpeed, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { GroupTransparency = 0 })
+						TweenService:Create(loadingScale, TweenInfo.new(fadeInSpeed, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+						tIn:Play()
+						tIn.Completed:Wait()
+					else
+						loadingRoot.GroupTransparency = 0
+						loadingScale.Scale = 1
+					end
+
+					if u.Unloaded or not loadingRoot.Parent then
+						spinConn:Disconnect()
+						return
+					end
+
+					if loadDuration > 0 then
+						task.wait(loadDuration)
+					end
+
+					if u.Unloaded or not loadingRoot.Parent then
+						spinConn:Disconnect()
+						return
+					end
+
+					if fadeOutSpeed > 0 then
+						local tOut = TweenService:Create(loadingRoot, TweenInfo.new(fadeOutSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { GroupTransparency = 1 })
+						TweenService:Create(loadingScale, TweenInfo.new(fadeOutSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Scale = 0.9 }):Play()
+						tOut:Play()
+						tOut.Completed:Wait()
+					end
+
+					spinConn:Disconnect()
+					if loadingRoot.Parent then
+						loadingRoot:Destroy()
+					end
+
+					if u.Unloaded or not v.Root.Parent then
+						return
+					end
+
+					v.Minimized = false
+					zoomScale.Scale = 0
+					applyTransform()
+					v.Root.Visible = true
+					local revealSpeed = math.max(0, tonumber(v.MinimizeSpeed) or 0.25)
+					if revealSpeed <= 0 then
+						zoomScale.Scale = 1
+						applyTransform()
+					else
+						activeZoomTween = TweenService:Create(
+							zoomScale,
+							TweenInfo.new(revealSpeed, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+							{ Scale = 1 }
+						)
+						activeZoomTween:Play()
+					end
+				end)
 			end
 			local I, J = 0, 0
 			v.SelectorPosMotor:onStep(function(K)
