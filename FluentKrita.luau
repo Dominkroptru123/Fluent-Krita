@@ -1842,7 +1842,7 @@ local aa = {
 			end
 			if discordCode and discordCode ~= '' then
 				local discordSec = x:AddSection('Discord')
-				discordSec:AddButton('JoinDiscord', {
+				discordSec:AddButton({
 					Title = 'Join Discord',
 					Description = 'Copy discord.gg/' .. discordCode,
 					Callback = function()
@@ -1902,7 +1902,7 @@ local aa = {
 			local clipFn = setclipboard or toclipboard
 			if clipFn then
 				local actionSec = x:AddSection('Quick Actions')
-				actionSec:AddButton('CopyUserId', {
+				actionSec:AddButton({
 					Title = 'Copy UserId',
 					Description = tostring(userId),
 					Callback = function()
@@ -1910,7 +1910,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'UserId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton('CopyPlaceId', {
+				actionSec:AddButton({
 					Title = 'Copy PlaceId',
 					Description = tostring(game.PlaceId),
 					Callback = function()
@@ -1918,7 +1918,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'PlaceId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton('CopyJobId', {
+				actionSec:AddButton({
 					Title = 'Copy JobId',
 					Description = jobIdText,
 					Callback = function()
