@@ -456,27 +456,45 @@ local aa = {
 				return nil
 			end
 			NebulaIconsLoadAttempted = true
-			local success, result = pcall(function()
-				local source = game:HttpGet('https://raw.nebulasoftworks.xyz/nebula-icon-library-loader')
-				local compiler = loadstring(source)
-				assert(type(compiler) == 'function', 'Nebula Icon Library loader could not be compiled')
-				return compiler()
-			end)
-			if success and type(result) == 'table' and type(result.GetIcon) == 'function' then
-				NebulaIcons = result
-			else
+			local urls = {
+				'https://raw.nebulasoftworks.xyz/nebula-icon-library-loader',
+				'https://raw.githubusercontent.com/Nebula-Softworks/Nebula-Icon-Library/master/Loader.lua'
+			}
+			for _, url in ipairs(urls) do
+				local success, result = pcall(function()
+					local source = game:HttpGet(url)
+					local compiler = loadstring(source)
+					assert(type(compiler) == 'function', 'Nebula Icon Library loader could not be compiled')
+					return compiler()
+				end)
+				if success and type(result) == 'table' and type(result.GetIcon) == 'function' then
+					NebulaIcons = result
+					break
+				end
+			end
+			if not NebulaIcons then
 				warn('[FluentKrita] Nebula Icon Library failed to initialize; bundled Lucide icons remain available.')
 			end
 			return NebulaIcons
 		end
 		local function NormalizeIconAsset(asset)
+			if type(asset) == 'table' then
+				asset = asset.Id or asset.id or asset.AssetId or asset.assetId or asset.Image or asset.image or asset[1]
+			end
 			if type(asset) == 'number' then
-				return 'rbxassetid://' .. tostring(asset)
+				if asset > 0 then
+					return 'rbxassetid://' .. tostring(asset)
+				end
+				return nil
 			elseif type(asset) == 'string' then
-				if asset:match('^rbxassetid://') or asset:match('^https?://') then
+				asset = asset:match('^%s*(.-)%s*$')
+				if asset == '' or asset == '0' or asset == 'rbxassetid://0' then
+					return nil
+				end
+				if asset:match('^rbxassetid://') or asset:match('^rbxasset://') or asset:match('^rbxthumb://') or asset:match('^https?://') then
 					return asset
 				elseif asset:match('^%d+$') then
-					return 'rbxassetid://' .. asset
+					return tonumber(asset) ~= 0 and ('rbxassetid://' .. asset) or nil
 				end
 			end
 			return nil
@@ -488,15 +506,25 @@ local aa = {
 			if type(A) ~= 'string' or A == '' then
 				return nil
 			end
-			if A:match('^rbxassetid://') or A:match('^https?://') or A:match('^%d+$') then
-				return NormalizeIconAsset(A)
+			local direct = NormalizeIconAsset(A)
+			if direct then
+				return direct
 			end
-			source = string.lower(tostring(source or 'Lucide'))
-			if source == 'material' or source == 'lucide' then
-				local iconLibrary = LoadNebulaIcons()
-				if iconLibrary then
+			local rawSource = tostring(source or 'Lucide')
+			source = string.lower(rawSource)
+			local iconLibrary = LoadNebulaIcons()
+			if iconLibrary then
+				local packs = {}
+				if source == 'material' then
+					packs = { 'Material', 'Symbols', 'Symbols-Filled' }
+				elseif source == 'lucide' then
+					packs = { 'Lucide' }
+				else
+					packs = { rawSource }
+				end
+				for _, pack in ipairs(packs) do
 					local success, asset = pcall(function()
-						return iconLibrary:GetIcon(A, source == 'material' and 'Material' or 'Lucide')
+						return iconLibrary:GetIcon(A, pack)
 					end)
 					if success then
 						local normalized = NormalizeIconAsset(asset)
@@ -505,10 +533,11 @@ local aa = {
 						end
 					end
 				end
-				local bundledFallback = y['lucide-' .. A]
-				if bundledFallback then
-					return bundledFallback
-				end
+			end
+			local lucideKey = A:lower():gsub('_', '-')
+			local bundledFallback = y[A] or y['lucide-' .. A] or y['lucide-' .. lucideKey]
+			if bundledFallback then
+				return NormalizeIconAsset(bundledFallback)
 			end
 			return nil
 		end
@@ -539,6 +568,8 @@ local aa = {
 				local homeIconSource = D.HomeIconSource or 'Lucide'
 				LoadNebulaIcons()
 				homeIconAsset = x:GetIcon(homeIconName, homeIconSource)
+					or x:GetIcon(homeIconName, 'Lucide')
+					or y['lucide-home']
 				if not homeIconAsset then
 					warn('[FluentKrita] Failed to resolve Home icon: ' .. tostring(homeIconName) .. ' (' .. tostring(homeIconSource) .. ')')
 				end
@@ -1505,15 +1536,16 @@ local aa = {
 				UnselectedTransparency = 1
 			}
 			if type(r) == 'number' then
-				r = 'rbxassetid://' .. tostring(r)
+				r = r > 0 and ('rbxassetid://' .. tostring(r)) or nil
 			elseif type(r) == 'string' and r ~= '' then
+				r = r:match('^%s*(.-)%s*$')
 				if r:match('^%d+$') then
-					r = 'rbxassetid://' .. r
-				elseif not r:match('^rbxassetid://') and not r:match('^https?://') then
+					r = tonumber(r) ~= 0 and ('rbxassetid://' .. r) or nil
+				elseif not r:match('^rbxassetid://') and not r:match('^rbxasset://') and not r:match('^rbxthumb://') and not r:match('^https?://') then
 					r = t:GetIcon(r, imageSource or 'Lucide')
 				end
 			end
-			if type(r) ~= 'string' or r == '' then
+			if type(r) ~= 'string' or r == '' or r == 'rbxassetid://0' then
 				r = nil
 			end
 			x.Frame = k('TextButton', {
@@ -1550,7 +1582,8 @@ local aa = {
 					Size = UDim2.fromOffset(16, 16),
 					Position = UDim2.new(0, 8, 0.5, 0),
 					BackgroundTransparency = 1,
-					Image = r and r or nil,
+					Visible = r ~= nil,
+					Image = r or '',
 					ThemeTag = {
 						ImageColor3 = 'Text'
 					}
@@ -1721,7 +1754,12 @@ local aa = {
 			end
 
 
-			local homeIcon = opts.HomeIconAsset or opts.HomeIcon or 'home'
+			local homeIcon = opts.HomeIconAsset
+			if type(homeIcon) ~= 'string' or homeIcon == '' or homeIcon == 'rbxassetid://0' then
+				homeIcon = t:GetIcon(opts.HomeIcon or 'home', opts.HomeIconSource or 'Lucide')
+					or t:GetIcon(opts.HomeIcon or 'home', 'Lucide')
+					or 'rbxassetid://10723407389'
+			end
 			local x = o:New('Home', homeIcon, u.TabHolder, opts.HomeIconSource or 'Lucide')
 			x.Name = 'Home'
 			local profileHeader = k('Frame', {
@@ -5046,7 +5084,7 @@ local aa = {
 				['lucide-hexagon'] = 'rbxassetid://10723407092',
 				['lucide-highlighter'] = 'rbxassetid://10723407192',
 				['lucide-history'] = 'rbxassetid://10723407335',
-				['lucide-home'] = 'rbxassetid://6022668883',
+				['lucide-home'] = 'rbxassetid://10723407389',
 				['lucide-hourglass'] = 'rbxassetid://10723407498',
 				['lucide-ice-cream'] = 'rbxassetid://10723414308',
 				['lucide-image'] = 'rbxassetid://10723415040',
