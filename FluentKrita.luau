@@ -455,7 +455,7 @@ local aa = {
 		local z = {}
 		z.__index = z
 		z.__namecall = function(A, B, ...)
-			return z[B](...)
+			return z[B](A, ...)
 		end
 		for A, B in ipairs(q) do
 			z['Add' .. B.__type] = function(C, D, E)
@@ -1842,7 +1842,7 @@ local aa = {
 			end
 			if discordCode and discordCode ~= '' then
 				local discordSec = x:AddSection('Discord')
-				discordSec:AddButton({
+				v.AddButton(discordSec, {
 					Title = 'Join Discord',
 					Description = 'Copy discord.gg/' .. discordCode,
 					Callback = function()
@@ -1861,18 +1861,18 @@ local aa = {
 				})
 			end
 			local accountSec = x:AddSection('Client & Executor')
-			accountSec:AddParagraph({ Title = 'Executor', Content = executorDisplayName })
-			accountSec:AddParagraph({
+			v.AddParagraph(accountSec, { Title = 'Executor', Content = executorDisplayName })
+			v.AddParagraph(accountSec, {
 				Title = 'Executor Support',
 				Content = 'Your executor is ' .. executorSupport
 			})
-			accountSec:AddParagraph({
+			v.AddParagraph(accountSec, {
 				Title = 'Account Details',
 				Content = string.format('Username: %s\nDisplay Name: %s\nUserId: %s\nAccount Age: %s days', userName, displayName, tostring(userId), tostring(LocalPlayer and LocalPlayer.AccountAge or 0))
 			})
 
 			local gameSec = x:AddSection('Game & Server')
-			local gamePara = gameSec:AddParagraph({
+			local gamePara = v.AddParagraph(gameSec, {
 				Title = 'Experience',
 				Content = 'Loading...\nPlaceId: ' .. tostring(game.PlaceId)
 			})
@@ -1885,7 +1885,7 @@ local aa = {
 			end)
 
 			local jobIdText = (game.JobId and game.JobId ~= '') and game.JobId or 'Studio / Private'
-			local serverPara = gameSec:AddParagraph({
+			local serverPara = v.AddParagraph(gameSec, {
 				Title = 'Server Info',
 				Content = string.format('Players: %d / %d\nJobId: %s', #Players:GetPlayers(), Players.MaxPlayers, jobIdText)
 			})
@@ -1896,13 +1896,13 @@ local aa = {
 			j.AddSignal(Players.PlayerRemoving, refreshPlayers)
 
 			local sessionSec = x:AddSection('Session & Performance')
-			local uptimePara = sessionSec:AddParagraph({ Title = 'Uptime', Content = '00h 00m 00s' })
-			local perfPara = sessionSec:AddParagraph({ Title = 'Performance', Content = 'FPS: --  |  Ping: -- ms' })
+			local uptimePara = v.AddParagraph(sessionSec, { Title = 'Uptime', Content = '00h 00m 00s' })
+			local perfPara = v.AddParagraph(sessionSec, { Title = 'Performance', Content = 'FPS: --  |  Ping: -- ms' })
 
 			local clipFn = setclipboard or toclipboard
 			if clipFn then
 				local actionSec = x:AddSection('Quick Actions')
-				actionSec:AddButton({
+				v.AddButton(actionSec, {
 					Title = 'Copy UserId',
 					Description = tostring(userId),
 					Callback = function()
@@ -1910,7 +1910,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'UserId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton({
+				v.AddButton(actionSec, {
 					Title = 'Copy PlaceId',
 					Description = tostring(game.PlaceId),
 					Callback = function()
@@ -1918,7 +1918,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'PlaceId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton({
+				v.AddButton(actionSec, {
 					Title = 'Copy JobId',
 					Description = jobIdText,
 					Callback = function()
