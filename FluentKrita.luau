@@ -486,6 +486,7 @@ local aa = {
 				TabWidth = D.TabWidth,
 				Background = D.Background or D.BackgroundImage,
 				BackgroundTransparency = D.BackgroundTransparency,
+				HomeTab = D.HomeTab,
 				PlayerTab = D.PlayerTab,
 				SupportedExecutor = D.SupportedExecutor,
 				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
@@ -2985,10 +2986,13 @@ local aa = {
 				P:Open()
 			end
 			local N = e(p.Tab):Init(v)
-			if type(t.PlayerTab) == 'table' then
-				t.PlayerTab.SupportedExecutor = t.SupportedExecutor or t.PlayerTab.SupportedExecutor
-				v.PlayerTab = N:CreatePlayerTab(t.PlayerTab)
-				N:SelectTab(1)
+			if t.HomeTab == true then
+				local homeOptions = type(t.PlayerTab) == 'table' and t.PlayerTab or {}
+				homeOptions.SupportedExecutor = t.SupportedExecutor or homeOptions.SupportedExecutor
+				v.PlayerTab = N:CreatePlayerTab(homeOptions)
+				if v.PlayerTab then
+					N:SelectTab(1)
+				end
 			end
 			function v.AddTab(O, P)
 				return N:New(P.Title, P.Icon, v.TabHolder)
