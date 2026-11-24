@@ -1860,28 +1860,24 @@ local aa = {
 				discordCode = discordRaw:match('discord%.gg/([%w%-_]+)') or discordRaw:match('^%s*(.-)%s*$')
 			end
 			if discordCode and discordCode ~= '' then
-				local discordBtn = x:AddButton({
-					Title = discordCode,
+				local discordSec = x:AddSection('Discord')
+				discordSec:AddButton({
+					Title = 'Join Discord',
+					Description = 'Copy discord.gg/' .. discordCode,
 					Callback = function()
 						local fullUrl = 'https://discord.gg/' .. discordCode
 						local clip = setclipboard or toclipboard
-						if clip then
-							pcall(clip, fullUrl)
-							t:Notify({
-								Title = 'Discord',
-								Content = 'Copied ' .. fullUrl,
-								Duration = 3
-							})
-						else
-							t:Notify({
-								Title = 'Discord',
-								Content = fullUrl,
-								Duration = 5
-							})
+						local copied = false
+						if type(clip) == 'function' then
+							 copied = pcall(clip, fullUrl)
 						end
+						t:Notify({
+							Title = 'Discord',
+							Content = copied and 'Invite link copied!' or fullUrl,
+							Duration = 4
+						})
 					end
 				})
-				discordBtn.Frame.LayoutOrder = 2
 			end
 			local accountSec = x:AddSection('Client & Executor')
 			accountSec:AddParagraph({ Title = 'Executor', Content = executorName })
@@ -2685,9 +2681,9 @@ local aa = {
 				local loadOpts = type(t.LoadingScreen) == 'table' and t.LoadingScreen or {}
 				local loadTitle = loadOpts.Title or t.Title or 'Loading'
 				local loadSubTitle = loadOpts.SubTitle or t.SubTitle or 'Initializing interface...'
-				local loadDuration = tonumber(loadOpts.Duration) or 1.5
-				local fadeInSpeed = tonumber(loadOpts.FadeInSpeed) or 0.35
-				local fadeOutSpeed = tonumber(loadOpts.FadeOutSpeed) or 0.35
+				local loadDuration = tonumber(loadOpts.Duration) or 3
+				local fadeInSpeed = tonumber(loadOpts.FadeInSpeed) or 0.5
+				local fadeOutSpeed = tonumber(loadOpts.FadeOutSpeed) or 0.5
 				local rotateSpeed = tonumber(loadOpts.RotateSpeed) or 1.5
 				local loadIcon = loadOpts.Icon or 'rbxassetid://10723433935'
 				local RunService = game:GetService'RunService'
