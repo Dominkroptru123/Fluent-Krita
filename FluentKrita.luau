@@ -487,6 +487,7 @@ local aa = {
 				Background = D.Background or D.BackgroundImage,
 				BackgroundTransparency = D.BackgroundTransparency,
 				PlayerTab = D.PlayerTab,
+				SupportedExecutor = D.SupportedExecutor,
 				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
 				MinimizeButtonSpeed = D.MinimizeButtonSpeed,
 				Resizable = D.Resizable,
@@ -1589,33 +1590,60 @@ local aa = {
 			local userName = LocalPlayer and LocalPlayer.Name or 'Player'
 			local displayName = LocalPlayer and LocalPlayer.DisplayName or userName
 			local subtitle = opts.Subtitle or opts.Role or 'Advanced User'
-			local tabKey = '__PlayerTab'
 			local avatarUrl = 'rbxthumb://type=AvatarHeadShot&id=' .. tostring(userId) .. '&w=150&h=150'
 
 			local executorName = opts.Executor
-			if not executorName then
-				if identifyexecutor then
-					local ok, name, ver = pcall(identifyexecutor)
-					if ok and name then
-						executorName = ver and (tostring(name) .. ' ' .. tostring(ver)) or tostring(name)
-					end
-				elseif getexecutorname then
-					local ok, name = pcall(getexecutorname)
-					if ok and name then
-						executorName = tostring(name)
-					end
+			local executorVersion
+			if not executorName and type(identifyexecutor) == 'function' then
+				local ok, name, ver = pcall(identifyexecutor)
+				if ok and name then
+					executorName = tostring(name)
+					executorVersion = ver and tostring(ver) or nil
 				end
 			end
-			executorName = executorName or 'Unknown'
+			if not executorName and type(identify) == 'function' then
+				local ok, name = pcall(identify)
+				if ok and name then
+					executorName = tostring(name)
+				end
+			end
+			if not executorName and type(getexecutorname) == 'function' then
+				local ok, name = pcall(getexecutorname)
+				if ok and name then
+					executorName = tostring(name)
+				end
+			end
+			executorName = tostring(executorName or 'Unknown')
+			local executorDisplayName = executorName .. (executorVersion and (' ' .. executorVersion) or '')
+			local executorSupport = 'Not Listed'
+			local supportConfig = opts.SupportedExecutor or {}
+			local function normalizeExecutor(value)
+				return string.lower((tostring(value):gsub('%s+', ''):gsub('[%p_]', '')))
+			end
+			local function findExecutorLevel(list)
+				if type(list) ~= 'table' then
+					return false
+				end
+				local current = normalizeExecutor(executorName)
+				for _, supportedName in pairs(list) do
+					if normalizeExecutor(supportedName) == current then
+						return true
+					end
+				end
+				return false
+			end
+			if findExecutorLevel(supportConfig.FullSupported) then
+				executorSupport = 'Fully Supported'
+			elseif findExecutorLevel(supportConfig.HalfSupported) then
+				executorSupport = 'Half Supported'
+			elseif findExecutorLevel(supportConfig.Unsupported) then
+				executorSupport = 'Unsupported'
+			end
 
-			local x = {
-				Selected = false,
-				Name = opts.Title or 'Player Info',
-				Type = 'Tab',
-				UnselectedTransparency = 0.94
-			}
 
-			x.Frame = k('TextButton', {
+			local x = o:New('Home', 'house', u.TabHolder)
+			x.Name = 'Home'
+			local profileHeader = k('Frame', {
 				Size = UDim2.new(1, 0, 0, 48),
 				BackgroundTransparency = 0.94,
 				LayoutOrder = -1,
@@ -1696,58 +1724,10 @@ local aa = {
 				})
 			})
 
-			local y = k('UIListLayout', {
-				Padding = UDim.new(0, 5),
-				SortOrder = Enum.SortOrder.LayoutOrder
-			})
-			x.ContainerFrame = k('ScrollingFrame', {
-				Size = UDim2.fromScale(1, 1),
-				BackgroundTransparency = 1,
-				Parent = u.ContainerHolder,
-				Visible = false,
-				BottomImage = 'rbxassetid://6889812791',
-				MidImage = 'rbxassetid://6889812721',
-				TopImage = 'rbxassetid://6276641225',
-				ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255),
-				ScrollBarImageTransparency = 0.95,
-				ScrollBarThickness = 3,
-				BorderSizePixel = 0,
-				CanvasSize = UDim2.fromScale(0, 0),
-				ScrollingDirection = Enum.ScrollingDirection.Y
-			}, {
-				y,
-				k('UIPadding', {
-					PaddingRight = UDim.new(0, 10),
-					PaddingLeft = UDim.new(0, 1),
-					PaddingTop = UDim.new(0, 1),
-					PaddingBottom = UDim.new(0, 1)
-				})
-			})
-			j.AddSignal(y:GetPropertyChangedSignal'AbsoluteContentSize', function()
-				x.ContainerFrame.CanvasSize = UDim2.new(0, 0, 0, y.AbsoluteContentSize.Y + 2)
-			end)
+			x.ContainerFrame = x.Container
 
-			x.Motor, x.SetTransparency = j.SpringMotor(0.94, x.Frame, 'BackgroundTransparency')
-			j.AddSignal(x.Frame.MouseEnter, function()
-				x.SetTransparency(x.Selected and 0.85 or 0.89)
-			end)
-			j.AddSignal(x.Frame.MouseLeave, function()
-				x.SetTransparency(x.Selected and 0.89 or x.UnselectedTransparency)
-			end)
-			j.AddSignal(x.Frame.MouseButton1Down, function()
-				x.SetTransparency(0.92)
-			end)
-			j.AddSignal(x.Frame.MouseButton1Up, function()
-				x.SetTransparency(x.Selected and 0.85 or 0.89)
-			end)
-			j.AddSignal(x.Frame.MouseButton1Click, function()
-				o:SelectTab(tabKey)
-			end)
-
-			o.Containers[tabKey] = x.ContainerFrame
-			o.Tabs[tabKey] = x
 			x.Container = x.ContainerFrame
-			x.ScrollFrame = x.Container
+			x.ScrollFrame = x.ContainerFrame
 
 			function x.AddSection(z, A)
 				local B, C = {
@@ -1861,7 +1841,7 @@ local aa = {
 			end
 			if discordCode and discordCode ~= '' then
 				local discordSec = x:AddSection('Discord')
-				discordSec:AddButton({
+				discordSec:AddButton('JoinDiscord', {
 					Title = 'Join Discord',
 					Description = 'Copy discord.gg/' .. discordCode,
 					Callback = function()
@@ -1880,7 +1860,11 @@ local aa = {
 				})
 			end
 			local accountSec = x:AddSection('Client & Executor')
-			accountSec:AddParagraph({ Title = 'Executor', Content = executorName })
+			accountSec:AddParagraph({ Title = 'Executor', Content = executorDisplayName })
+			accountSec:AddParagraph({
+				Title = 'Executor Support',
+				Content = 'Your executor is ' .. executorSupport
+			})
 			accountSec:AddParagraph({
 				Title = 'Account Details',
 				Content = string.format('Username: %s\nDisplay Name: %s\nUserId: %s\nAccount Age: %s days', userName, displayName, tostring(userId), tostring(LocalPlayer and LocalPlayer.AccountAge or 0))
@@ -1917,7 +1901,7 @@ local aa = {
 			local clipFn = setclipboard or toclipboard
 			if clipFn then
 				local actionSec = x:AddSection('Quick Actions')
-				actionSec:AddButton({
+				actionSec:AddButton('CopyUserId', {
 					Title = 'Copy UserId',
 					Description = tostring(userId),
 					Callback = function()
@@ -1925,7 +1909,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'UserId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton({
+				actionSec:AddButton('CopyPlaceId', {
 					Title = 'Copy PlaceId',
 					Description = tostring(game.PlaceId),
 					Callback = function()
@@ -1933,7 +1917,7 @@ local aa = {
 						t:Notify({ Title = 'Copied', Content = 'PlaceId copied to clipboard.', Duration = 3 })
 					end
 				})
-				actionSec:AddButton({
+				actionSec:AddButton('CopyJobId', {
 					Title = 'Copy JobId',
 					Description = jobIdText,
 					Callback = function()
@@ -3001,8 +2985,10 @@ local aa = {
 				P:Open()
 			end
 			local N = e(p.Tab):Init(v)
-			if t.PlayerTab then
+			if type(t.PlayerTab) == 'table' then
+				t.PlayerTab.SupportedExecutor = t.SupportedExecutor or t.PlayerTab.SupportedExecutor
 				v.PlayerTab = N:CreatePlayerTab(t.PlayerTab)
+				N:SelectTab(1)
 			end
 			function v.AddTab(O, P)
 				return N:New(P.Title, P.Icon, v.TabHolder)
@@ -3011,7 +2997,7 @@ local aa = {
 				N:SelectTab(P or 1)
 			end
 			function v.SelectPlayerTab(O)
-				N:SelectTab('__PlayerTab')
+				N:SelectTab(1)
 			end
 			m.AddSignal(v.TabHolder:GetPropertyChangedSignal'CanvasPosition', function()
 				I = N:GetCurrentTabPos() + 16
