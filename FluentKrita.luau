@@ -596,7 +596,8 @@ local aa = {
 				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
 				MinimizeButtonSpeed = D.MinimizeButtonSpeed,
 				Resizable = D.Resizable,
-				LoadingScreen = D.LoadingScreen
+				LoadingScreen = D.LoadingScreen,
+				MobileIcon = D.MobileIcon
 			}
 			x.Window = E
 			x:SetTheme(D.Theme)
@@ -2919,6 +2920,9 @@ local aa = {
 					zoomScale.Scale = 0
 					applyTransform()
 					v.Root.Visible = true
+					if v.MobileIcon then
+						v.MobileIcon.Visible = true
+					end
 					local revealSpeed = math.max(0, tonumber(v.MinimizeSpeed) or 0.25)
 					if revealSpeed <= 0 then
 						zoomScale.Scale = 1
@@ -2932,6 +2936,84 @@ local aa = {
 						activeZoomTween:Play()
 					end
 				end)
+			end
+			do
+				local mobileIconOpts = type(t.MobileIcon) == 'table' and t.MobileIcon or {}
+				local mobileIconEnabled = t.MobileIcon == true or (type(t.MobileIcon) == 'table' and mobileIconOpts.Enabled ~= false)
+				local isMobile = h.TouchEnabled and not h.KeyboardEnabled
+
+				if mobileIconEnabled and isMobile then
+					local button = s('ImageButton', {
+						Name = 'MobileToggleIcon',
+						Size = mobileIconOpts.Size or UDim2.new(0, 75, 0, 75),
+						Position = mobileIconOpts.Position or UDim2.new(0, 20, 0.5, -25),
+						Image = mobileIconOpts.Image or 'rbxassetid://93963297214846',
+						BackgroundColor3 = mobileIconOpts.BackgroundColor3 or Color3.fromRGB(40, 40, 40),
+						BackgroundTransparency = mobileIconOpts.BackgroundTransparency or 0,
+						Visible = not hasLoading,
+						ZIndex = 100,
+						Parent = t.Parent
+					}, {
+						s('UICorner', {
+							CornerRadius = mobileIconOpts.CornerRadius or UDim.new(0.5, 0)
+						})
+					})
+					v.MobileIcon = button
+
+					local function syncIconTransparency()
+						button.ImageTransparency = v.Root.Visible and 0 or 0.5
+					end
+					syncIconTransparency()
+					m.AddSignal(v.Root:GetPropertyChangedSignal('Visible'), syncIconTransparency)
+
+					local dragInput = nil
+					local dragStart = nil
+					local startPos = nil
+					local moved = false
+
+					m.AddSignal(button.InputBegan, function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1
+							or input.UserInputType == Enum.UserInputType.Touch then
+							dragInput = input
+							dragStart = input.Position
+							startPos = button.Position
+							moved = false
+						end
+					end)
+
+					m.AddSignal(h.InputChanged, function(input)
+						if not dragStart then
+							return
+						end
+						local isMatchingTouch = input.UserInputType == Enum.UserInputType.Touch and input == dragInput
+						local isMouseMove = input.UserInputType == Enum.UserInputType.MouseMovement
+							and dragInput and dragInput.UserInputType == Enum.UserInputType.MouseButton1
+
+						if isMatchingTouch or isMouseMove then
+							local delta = input.Position - dragStart
+							if delta.X ~= 0 or delta.Y ~= 0 then
+								moved = true
+								button.Position = UDim2.new(
+									startPos.X.Scale,
+									startPos.X.Offset + delta.X,
+									startPos.Y.Scale,
+									startPos.Y.Offset + delta.Y
+								)
+							end
+						end
+					end)
+
+					m.AddSignal(h.InputEnded, function(input)
+						if input == dragInput then
+							if not moved then
+								v:Minimize()
+							end
+							dragInput = nil
+							dragStart = nil
+							moved = false
+						end
+					end)
+				end
 			end
 			local I, J = 0, 0
 			v.SelectorPosMotor:onStep(function(K)
