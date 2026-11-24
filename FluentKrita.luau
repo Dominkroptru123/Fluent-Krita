@@ -1642,7 +1642,7 @@ local aa = {
 			end
 
 
-			local x = o:New('Home', 'house', u.TabHolder)
+			local x = o:New('Home', 'home', u.TabHolder)
 			x.Name = 'Home'
 			local profileHeader = k('Frame', {
 				Size = UDim2.new(1, 0, 0, 48),
