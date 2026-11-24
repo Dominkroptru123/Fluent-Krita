@@ -446,11 +446,64 @@ local aa = {
 			return z:find'%.' and tonumber(z:sub(1, z:find'%.' + A)) or z
 		end
 		local y = e(o.Icons).assets
-		function x.GetIcon(z, A)
-			if A ~= nil and y['lucide-' .. A] then
-				return y['lucide-' .. A]
+		local MaterialIconLibrary
+		local MaterialIconLoadAttempted = false
+		local function LoadMaterialIconLibrary()
+			if MaterialIconLibrary then
+				return MaterialIconLibrary
+			end
+			if MaterialIconLoadAttempted then
+				return nil
+			end
+			MaterialIconLoadAttempted = true
+			local success, result = pcall(function()
+				local source = game:HttpGet('https://raw.nebulasoftworks.xyz/nebula-icon-library-loader')
+				local compiler = loadstring(source)
+				assert(type(compiler) == 'function', 'Material icon loader could not be compiled')
+				return compiler()
+			end)
+			if success and type(result) == 'table' and type(result.GetIcon) == 'function' then
+				MaterialIconLibrary = result
+			else
+				warn('[FluentKrita] Material icon library failed to load; using Lucide fallback.')
+			end
+			return MaterialIconLibrary
+		end
+		local function NormalizeImageAsset(asset)
+			if type(asset) == 'number' then
+				return 'rbxassetid://' .. tostring(asset)
+			elseif type(asset) == 'string' then
+				if asset:match('^rbxassetid://') or asset:match('^https?://') then
+					return asset
+				elseif asset:match('^%d+$') then
+					return 'rbxassetid://' .. asset
+				end
 			end
 			return nil
+		end
+		function x.GetIcon(z, A, source)
+			if type(A) ~= 'string' or A == '' then
+				return nil
+			end
+			source = tostring(source or 'Lucide')
+			if string.lower(source) == 'material' then
+				local iconLibrary = LoadMaterialIconLibrary()
+				if iconLibrary then
+					local success, asset = pcall(function()
+						return iconLibrary:GetIcon(A, 'Material')
+					end)
+					if success then
+						local image = NormalizeImageAsset(asset)
+						if image then
+							return image
+						end
+					end
+				end
+				return y['lucide-' .. A] or y['lucide-home']
+			elseif string.lower(source) == 'custom' then
+				return NormalizeImageAsset(A)
+			end
+			return y['lucide-' .. A]
 		end
 		local z = {}
 		z.__index = z
@@ -487,6 +540,8 @@ local aa = {
 				Background = D.Background or D.BackgroundImage,
 				BackgroundTransparency = D.BackgroundTransparency,
 				HomeTab = D.HomeTab,
+				HomeIcon = D.HomeIcon,
+				HomeIconSource = D.HomeIconSource,
 				PlayerTab = D.PlayerTab,
 				SupportedExecutor = D.SupportedExecutor,
 				MinimizeSpeed = D.MinimizeSpeed or D.ZoomSpeed or D.AnimationSpeed,
@@ -1421,9 +1476,13 @@ local aa = {
 			local q, r = o.Window.TabHolder.AbsolutePosition.Y, tab.Frame.AbsolutePosition.Y
 			return (r - q) + (tab.Frame.AbsoluteSize.Y / 2) - 17
 		end
-		function o.New(p, q, r, s)
+		function o.New(p, q, r, s, imageSource)
 			local t, u = e(h), o.Window
 			local v = t.Elements
+			local iconImage = t:GetIcon(r, imageSource)
+			if not iconImage and type(r) == 'string' then
+				iconImage = t:GetIcon(r, 'Lucide')
+			end
 			o.TabCount = o.TabCount + 1
 			local w, x = o.TabCount, {
 				Selected = false,
@@ -1431,11 +1490,8 @@ local aa = {
 				Type = 'Tab',
 				UnselectedTransparency = 1
 			}
-			if t:GetIcon(r) then
-				r = t:GetIcon(r)
-			end
-			if r == '' or nil then
-				r = nil
+			if iconImage == '' then
+				iconImage = nil
 			end
 			x.Frame = k('TextButton', {
 				Size = UDim2.new(1, 0, 0, 34),
@@ -1451,7 +1507,7 @@ local aa = {
 				}),
 				k('TextLabel', {
 					AnchorPoint = Vector2.new(0, 0.5),
-					Position = r and UDim2.new(0, 30, 0.5, 0) or UDim2.new(0, 12, 0.5, 0),
+					Position = iconImage and UDim2.new(0, 30, 0.5, 0) or UDim2.new(0, 12, 0.5, 0),
 					Text = q,
 					RichText = true,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -1471,7 +1527,7 @@ local aa = {
 					Size = UDim2.fromOffset(16, 16),
 					Position = UDim2.new(0, 8, 0.5, 0),
 					BackgroundTransparency = 1,
-					Image = r and r or nil,
+					Image = iconImage,
 					ThemeTag = {
 						ImageColor3 = 'Text'
 					}
@@ -1642,7 +1698,7 @@ local aa = {
 			end
 
 
-			local x = o:New('Home', 'home', u.TabHolder)
+			local x = o:New('Home', opts.HomeIcon or 'home', u.TabHolder, opts.HomeIconSource or 'Material')
 			x.Name = 'Home'
 			local profileHeader = k('Frame', {
 				Size = UDim2.new(1, 0, 0, 48),
@@ -2989,13 +3045,16 @@ local aa = {
 			if t.HomeTab == true then
 				local homeOptions = type(t.PlayerTab) == 'table' and t.PlayerTab or {}
 				homeOptions.SupportedExecutor = t.SupportedExecutor or homeOptions.SupportedExecutor
+				homeOptions.HomeIcon = t.HomeIcon or homeOptions.HomeIcon or 'home'
+				homeOptions.HomeIconSource = t.HomeIconSource or homeOptions.HomeIconSource or 'Material'
 				v.PlayerTab = N:CreatePlayerTab(homeOptions)
 				if v.PlayerTab then
 					N:SelectTab(1)
 				end
 			end
 			function v.AddTab(O, P)
-				return N:New(P.Title, P.Icon, v.TabHolder)
+				P = P or {}
+				return N:New(P.Title, P.Icon, v.TabHolder, P.ImageSource)
 			end
 			function v.SelectTab(O, P)
 				N:SelectTab(P or 1)
